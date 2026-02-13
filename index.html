@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL Interactive Orb - Single File</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #050505;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: auto;
+            touch-action: none;
+        }
+
+        canvas.hovering {
+            cursor: pointer;
+        }
+
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #info h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #00f2ea 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #info p {
+            margin: 5px 0;
+            opacity: 0.8;
+            font-size: 13px;
+        }
+
+        #palette-name {
+            font-weight: 600;
+            color: #00f2ea;
+            transition: color 0.3s ease;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 600px) {
+            #info {
+                top: auto;
+                bottom: 20px;
+                left: 10px;
+                right: 10px;
+                padding: 12px 15px;
+                text-align: center;
+            }
+
+            #info h3 {
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+
+            #info p {
+                font-size: 11px;
+                margin: 2px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="webgl-canvas"></canvas>
+
+    <div id="info">
+        <h3>Interactive WebGL Orb</h3>
+        <p>Click to change colors</p>
+        <p>Hover for interaction</p>
+        <p>Current palette: <span id="palette-name">Cyan</span></p>
+    </div>
+    <script src="./gl-matrix.js"></script>
+    <script src="./geometry.js"></script>
+    <script src="./shaders.js"></script>
+    <script src="./app.js"></script>
+</body>
+
+</html>
