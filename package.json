@@ -1,0 +1,19 @@
+{
+    "name": "luminasphere-webgl",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview"
+    },
+    "devDependencies": {
+        "@types/gl-matrix": "^3.2.0",
+        "typescript": "^5.0.0",
+        "vite": "^7.0.0"
+    },
+    "dependencies": {
+        "gl-matrix": "^3.4.3"
+    }
+}
