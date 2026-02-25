@@ -1,6 +1,6 @@
-import { mat4, vec3 } from 'gl-matrix';
 import { GeometryUtils, GeometryData } from './geometry';
-import { vertexShaderSource, fragmentShaderSource } from './shaders';
+import { vertexShaderSource, fragmentShaderSource, particleVertexShader, particleFragmentShader } from './shaders';
+import { mat4, vec3 } from 'gl-matrix';
 
 interface Palette {
     name: string;
@@ -37,7 +37,9 @@ class WebGLOrb {
     private normalBuffer!: WebGLBuffer;
     private uvBuffer!: WebGLBuffer;
     private indexBuffer!: WebGLBuffer;
+    private lineIndexBuffer!: WebGLBuffer;
     private program!: WebGLProgram;
+    private isWireframe: boolean = false;
 
     private projectionMatrix!: mat4;
     private viewMatrix!: mat4;
@@ -46,6 +48,14 @@ class WebGLOrb {
 
     private attributes!: { [key: string]: number };
     private uniforms!: { [key: string]: WebGLUniformLocation | null };
+
+    // Particles
+    private particleProgram!: WebGLProgram;
+    private particlePositions!: WebGLBuffer;
+    private particleExtras!: WebGLBuffer;
+    private particleCount: number = 800;
+    private particleAttributes!: { [key: string]: number };
+    private particleUniforms!: { [key: string]: WebGLUniformLocation | null };
 
     constructor() {
         this.canvas = document.getElementById('webgl-canvas') as HTMLCanvasElement;
@@ -68,6 +78,7 @@ class WebGLOrb {
 
         this.createBuffers();
         this.createShaderProgram();
+        this.createParticleSystem();
         this.setupMatrices();
         this.setupEventListeners();
         requestAnimationFrame((time) => this.render(time));
@@ -108,6 +119,10 @@ class WebGLOrb {
         this.indexBuffer = gl.createBuffer()!;
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.geometry.indices, gl.STATIC_DRAW);
+
+        this.lineIndexBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.lineIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.geometry.lineIndices, gl.STATIC_DRAW);
     }
 
     private createShader(type: number, source: string): WebGLShader | null {
@@ -164,6 +179,52 @@ class WebGLOrb {
         };
     }
 
+    private createParticleSystem() {
+        const gl = this.gl;
+        const vs = this.createShader(gl.VERTEX_SHADER, particleVertexShader);
+        const fs = this.createShader(gl.FRAGMENT_SHADER, particleFragmentShader);
+        if (!vs || !fs) return;
+
+        this.particleProgram = gl.createProgram()!;
+        gl.attachShader(this.particleProgram, vs);
+        gl.attachShader(this.particleProgram, fs);
+        gl.linkProgram(this.particleProgram);
+
+        this.particleAttributes = {
+            position: gl.getAttribLocation(this.particleProgram, 'aPosition'),
+            size: gl.getAttribLocation(this.particleProgram, 'aSize'),
+            speed: gl.getAttribLocation(this.particleProgram, 'aSpeed')
+        };
+
+        this.particleUniforms = {
+            projectionMatrix: gl.getUniformLocation(this.particleProgram, 'uProjectionMatrix'),
+            viewMatrix: gl.getUniformLocation(this.particleProgram, 'uViewMatrix'),
+            time: gl.getUniformLocation(this.particleProgram, 'uTime'),
+            cursorBase: gl.getUniformLocation(this.particleProgram, 'uCursor'),
+            cursorActive: gl.getUniformLocation(this.particleProgram, 'uCursorActive'),
+            color: gl.getUniformLocation(this.particleProgram, 'uColor')
+        };
+
+        const positions = new Float32Array(this.particleCount * 3);
+        const extras = new Float32Array(this.particleCount * 2); // size, speed
+
+        for (let i = 0; i < this.particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 15;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 15;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
+            extras[i * 2] = Math.random() * 2.0 + 0.5;
+            extras[i * 2 + 1] = Math.random() * 1.5 + 0.5;
+        }
+
+        this.particlePositions = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.particlePositions);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        this.particleExtras = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.particleExtras);
+        gl.bufferData(gl.ARRAY_BUFFER, extras, gl.STATIC_DRAW);
+    }
+
     private setupMatrices() {
         this.projectionMatrix = mat4.create();
         const aspect = this.canvas.width / this.canvas.height;
@@ -207,6 +268,24 @@ class WebGLOrb {
             this.isMouseOver = false;
             this.canvas.classList.remove('hovering');
         });
+
+        const wireframeBtn = document.getElementById('wireframe-toggle');
+        if (wireframeBtn) {
+            wireframeBtn.addEventListener('click', () => {
+                this.isWireframe = !this.isWireframe;
+                wireframeBtn.classList.toggle('active', this.isWireframe);
+                wireframeBtn.textContent = `Wireframe: ${this.isWireframe ? 'ON' : 'OFF'}`;
+            });
+        }
+
+        const detailSlider = document.getElementById('detail-slider') as HTMLInputElement;
+        if (detailSlider) {
+            detailSlider.addEventListener('input', () => {
+                const detail = parseInt(detailSlider.value);
+                this.geometry = GeometryUtils.createIcosahedron(2, detail);
+                this.createBuffers();
+            });
+        }
     }
 
     private handleClick() {
@@ -305,8 +384,6 @@ class WebGLOrb {
         gl.enableVertexAttribArray(this.attributes.uv);
         gl.vertexAttribPointer(this.attributes.uv, 2, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-
         gl.uniformMatrix4fv(this.uniforms.projectionMatrix, false, this.projectionMatrix);
         gl.uniformMatrix4fv(this.uniforms.viewMatrix, false, this.viewMatrix);
         gl.uniformMatrix4fv(this.uniforms.modelMatrix, false, this.modelMatrix);
@@ -319,7 +396,35 @@ class WebGLOrb {
         gl.uniform1f(this.uniforms.cursorActive, this.cursorActive);
         gl.uniform3fv(this.uniforms.cameraPosition, [0, 0, 6]);
 
-        gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
+        if (this.isWireframe) {
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.lineIndexBuffer);
+            gl.drawElements(gl.LINES, this.geometry.lineIndices.length, gl.UNSIGNED_SHORT, 0);
+        } else {
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            gl.drawElements(gl.TRIANGLES, this.geometry.indices.length, gl.UNSIGNED_SHORT, 0);
+        }
+
+        // --- Render Particles ---
+        gl.useProgram(this.particleProgram);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.particlePositions);
+        gl.enableVertexAttribArray(this.particleAttributes.position);
+        gl.vertexAttribPointer(this.particleAttributes.position, 3, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.particleExtras);
+        gl.enableVertexAttribArray(this.particleAttributes.size);
+        gl.vertexAttribPointer(this.particleAttributes.size, 1, gl.FLOAT, false, 8, 0);
+        gl.enableVertexAttribArray(this.particleAttributes.speed);
+        gl.vertexAttribPointer(this.particleAttributes.speed, 1, gl.FLOAT, false, 8, 4);
+
+        gl.uniformMatrix4fv(this.particleUniforms.projectionMatrix, false, this.projectionMatrix);
+        gl.uniformMatrix4fv(this.particleUniforms.viewMatrix, false, this.viewMatrix);
+        gl.uniform1f(this.particleUniforms.time, this.time);
+        gl.uniform3fv(this.particleUniforms.cursorBase, this.cursorPosition as Float32List);
+        gl.uniform1f(this.particleUniforms.cursorActive, this.cursorActive);
+        gl.uniform3fv(this.particleUniforms.color, this.currentColorA as Float32List);
+
+        gl.drawArrays(gl.POINTS, 0, this.particleCount);
+
         requestAnimationFrame((time) => this.render(time));
     }
 }

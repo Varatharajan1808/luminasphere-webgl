@@ -62,10 +62,73 @@
             font-size: 13px;
         }
 
-        #palette-name {
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group p {
+            margin: 0 !important;
             font-weight: 600;
+            text-transform: uppercase;
+            font-size: 10px !important;
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #00f2ea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 242, 234, 0.5);
+        }
+
+        #wireframe-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        #wireframe-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #00f2ea;
+        }
+
+        #wireframe-toggle.active {
+            background: rgba(0, 242, 234, 0.2);
+            border-color: #00f2ea;
             color: #00f2ea;
-            transition: color 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 242, 234, 0.3);
         }
 
         /* Mobile Responsiveness */
@@ -99,7 +162,17 @@
         <h3>Interactive WebGL Orb</h3>
         <p>Click to change colors</p>
         <p>Hover for interaction</p>
-        <p>Current palette: <span id="palette-name">Cyan</span></p>
+        <div class="controls">
+            <div class="control-group">
+                <p>Resolution</p>
+                <input type="range" id="detail-slider" min="1" max="5" value="4">
+            </div>
+
+            <div class="control-group">
+                <p>Palette: <span id="palette-name">Cyan</span></p>
+                <button id="wireframe-toggle">Wireframe: OFF</button>
+            </div>
+        </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
 </body>

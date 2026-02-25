@@ -1,10 +1,9 @@
-// Nothing here - removed unused import
-
 export interface GeometryData {
     positions: Float32Array;
     normals: Float32Array;
     uvs: Float32Array;
     indices: Uint16Array;
+    lineIndices: Uint16Array;
 }
 
 export const GeometryUtils = {
@@ -36,7 +35,7 @@ export const GeometryUtils = {
             faces.push(...faces2);
         }
 
-        const positions: number[] = [], normals: number[] = [], uvs: number[] = [], indices: number[] = [];
+        const positions: number[] = [], normals: number[] = [], uvs: number[] = [], indices: number[] = [], lineIndices: number[] = [];
         const vertexMap = new Map<string, number>();
         let index = 0;
 
@@ -60,14 +59,19 @@ export const GeometryUtils = {
                 vertexMap.set(key, index);
                 return index++;
             };
-            indices.push(addVertex(a), addVertex(b), addVertex(c));
+            const i1 = addVertex(a);
+            const i2 = addVertex(b);
+            const i3 = addVertex(c);
+            indices.push(i1, i2, i3);
+            lineIndices.push(i1, i2, i2, i3, i3, i1);
         }
 
         return {
             positions: new Float32Array(positions),
             normals: new Float32Array(normals),
             uvs: new Float32Array(uvs),
-            indices: new Uint16Array(indices)
+            indices: new Uint16Array(indices),
+            lineIndices: new Uint16Array(lineIndices)
         };
     },
 

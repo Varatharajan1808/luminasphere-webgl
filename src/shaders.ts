@@ -105,11 +105,65 @@ export const fragmentShaderSource = `
         float noise = snoise(vNormal * (2.0 + uHover) + uTime * 0.3);
         vec3 color = mix(uColorA, uColorB, noise * 0.5 + 0.5);
         vec3 viewDir = normalize(uCameraPosition - vPosition);
-        float fresnel = pow(1.0 - dot(viewDir, vNormal), 3.0);
+        
+        // Advanced Rim Lighting (Fresnel)
+        float fresnel = pow(1.0 - max(dot(viewDir, vNormal), 0.0), 3.0);
+        float pulse = (sin(uTime * 2.0) * 0.5 + 0.5) * 0.05;
+        
         color += uColorA * uHover * 0.2;
+        
+        // Cursor interaction glow
         float dist = distance(vPosition, uCursor);
-        float cursorGlow = smoothstep(0.5, 0.0, dist) * uCursorActive;
-        color += uColorA * cursorGlow * 0.6;
-        gl_FragColor = vec4(color + fresnel * 0.4, 1.0);
+        float cursorGlow = smoothstep(0.8, 0.0, dist) * uCursorActive;
+        color += uColorA * cursorGlow * 0.8;
+        
+        // Final color assembly with bloom-like Fresnel
+        gl_FragColor = vec4(color + fresnel * (0.5 + pulse), 0.95);
     }
 `;
+
+export const particleVertexShader = `
+    attribute vec3 aPosition;
+    attribute float aSize;
+    attribute float aSpeed;
+    
+    uniform mat4 uProjectionMatrix;
+    uniform mat4 uViewMatrix;
+    uniform float uTime;
+    uniform vec3 uCursor;
+    uniform float uCursorActive;
+    
+    varying float vAlpha;
+    
+    void main() {
+        vec3 pos = aPosition;
+        
+        // Float movement
+        pos.y += sin(uTime * 0.5 + aPosition.x) * 0.2 * aSpeed;
+        pos.x += cos(uTime * 0.3 + aPosition.z) * 0.2 * aSpeed;
+        
+        // Cursor reaction
+        float dist = distance(pos, uCursor);
+        float force = smoothstep(2.0, 0.0, dist) * uCursorActive;
+        pos += normalize(pos - uCursor) * force * 0.5;
+        
+        vAlpha = (sin(uTime + aPosition.y * 10.0) * 0.5 + 0.5) * 0.5 + 0.2;
+        
+        gl_Position = uProjectionMatrix * uViewMatrix * vec4(pos, 1.0);
+        gl_PointSize = aSize * (1.0 / length(gl_Position.xyz)) * 50.0;
+    }
+`;
+
+export const particleFragmentShader = `
+    precision mediump float;
+    varying float vAlpha;
+    uniform vec3 uColor;
+    
+    void main() {
+        float d = distance(gl_PointCoord, vec2(0.5));
+        if (d > 0.5) discard;
+        float strength = 1.0 - (d * 2.0);
+        gl_FragColor = vec4(uColor, strength * vAlpha);
+    }
+`;
+

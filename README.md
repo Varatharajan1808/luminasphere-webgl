@@ -13,25 +13,29 @@ A stunning interactive 3D orb built with WebGL, featuring smooth animations, dyn
 
 ## 🚀 Live Demo
 
-[View Live Demo](https://lumina-sphere.vercel.app/)
+[View Live Demo](https://luminasphere-webgl-ts.vercel.app/)
 
 ## 📁 Project Structure
 
 ```
-DynamicSphere/
-├── index.html          # Main HTML file with styles
-├── gl-matrix.js        # Matrix math library
-├── geometry.js         # Icosahedron geometry generation
-├── shaders.js          # Vertex and fragment shaders
-├── app.js              # Main WebGLOrb application
+luminasphere-webgl/
+├── src/                # Source files
+│   ├── main.ts         # Main WebGL application logic
+│   ├── geometry.ts     # Icosahedron geometry generation
+│   └── shaders.ts      # GLSL shaders
+├── index.html          # Entry point
+├── package.json        # Dependencies and scripts
+├── tsconfig.json       # TypeScript configuration
+├── vite.config.ts      # Vite configuration
 └── README.md           # This file
 ```
 
 ## 🛠️ Technologies
 
 - **WebGL** - 3D graphics rendering
+- **TypeScript** - Type-safe development
+- **Vite** - Lightning-fast build tool
 - **gl-matrix** - Matrix and vector math
-- **Vanilla JavaScript** - No frameworks needed
 - **GLSL** - Shader programming
 
 ## 💻 Local Development
@@ -42,12 +46,17 @@ git clone https://github.com/Varatharajan1808/luminasphere-webgl-main
 cd luminasphere-webgl-main
 ```
 
-2. Open with a local server:
-   - **VS Code**: Right-click `index.html` → "Open with Live Server"
-   - **Python**: `python -m http.server 8000`
-   - **Node.js**: `npx http-server`
+2. Install dependencies:
+```bash
+npm install
+```
 
-3. Open browser to `http://localhost:5500` (or your server's port)
+3. Start development server:
+```bash
+npm run dev
+```
+
+4. Open browser to the URL shown in your terminal (usually `http://localhost:5173`)
 
 ## 🎨 Color Palettes
 
