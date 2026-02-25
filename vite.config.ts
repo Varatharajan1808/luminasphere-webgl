@@ -8,7 +8,7 @@ export default defineConfig({
         {
             name: 'fix-windows-mime-type',
             configureServer(server) {
-                server.middlewares.use((req, res, next) => {
+                server.middlewares.use((req: any, res, next) => {
                     const url = req.url || '';
                     if (url.endsWith('.ts')) {
                         res.setHeader('Content-Type', 'application/javascript');
