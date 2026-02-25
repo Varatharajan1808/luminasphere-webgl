@@ -49,6 +49,7 @@ export const fragmentShaderSource = `
     uniform float uCursorActive;
     uniform vec3 uCameraPosition;
     
+    
     varying vec2 vUv;
     varying vec3 vNormal;
     varying vec3 vPosition;
